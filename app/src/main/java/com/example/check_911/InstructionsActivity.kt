@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -68,18 +70,28 @@ class InstructionsActivity : AppCompatActivity() {
 
     private fun setupToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
+        supportActionBar?.setDisplayShowTitleEnabled(true)
         toolbar.title = intent.getStringExtra(EXTRA_INSTRUCTION_TITLE).orEmpty().ifBlank { "Інструкція" }
         toolbar.setNavigationOnClickListener { finish() }
-        toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.action_instruction_done -> true
-                R.id.action_instruction_more -> {
-                    showInstructionOptionsMenu(toolbar)
-                    true
-                }
-                else -> false
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.survey_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
             }
+            R.id.action_finish -> true
+            R.id.action_options -> {
+                showInstructionOptionsMenu(toolbar)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
