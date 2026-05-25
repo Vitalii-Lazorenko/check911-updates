@@ -39,6 +39,35 @@ class InstructionAdapter(
         notifyDataSetChanged()
     }
 
+    fun selectFirstDetail(): InstructionDetailUi? {
+        val first = visibleItems.firstOrNull { it is InstructionUiItem.DetailItem } as? InstructionUiItem.DetailItem
+            ?: return null
+        selectedDetailLocalId = first.detail.localId
+        onDetailSelected(first.detail)
+        notifyDataSetChanged()
+        return first.detail
+    }
+
+    fun moveSelection(step: Int): InstructionDetailUi? {
+        if (visibleItems.isEmpty()) return null
+        val detailIndices = visibleItems.mapIndexedNotNull { index, item ->
+            if (item is InstructionUiItem.DetailItem) index else null
+        }
+        if (detailIndices.isEmpty()) return null
+
+        val currentIndex = detailIndices.indexOfFirst { idx ->
+            val item = visibleItems[idx] as InstructionUiItem.DetailItem
+            item.detail.localId == selectedDetailLocalId
+        }
+
+        val nextPosInDetails = if (currentIndex == -1) 0 else (currentIndex + step).coerceIn(0, detailIndices.lastIndex)
+        val nextItem = visibleItems[detailIndices[nextPosInDetails]] as InstructionUiItem.DetailItem
+        selectedDetailLocalId = nextItem.detail.localId
+        onDetailSelected(nextItem.detail)
+        notifyDataSetChanged()
+        return nextItem.detail
+    }
+
     fun markSelectedDetailAsCompleted() {
         val id = selectedDetailLocalId ?: return
         completedDetailIds.add(id)
@@ -60,6 +89,13 @@ class InstructionAdapter(
     }
 
     fun getCompletedDetailIds(): Set<String> = completedDetailIds.toSet()
+
+    fun getSelectedAdapterPosition(): Int {
+        val selectedId = selectedDetailLocalId ?: return RecyclerView.NO_POSITION
+        return visibleItems.indexOfFirst {
+            it is InstructionUiItem.DetailItem && it.detail.localId == selectedId
+        }
+    }
 
     override fun getItemViewType(position: Int): Int = when (visibleItems[position]) {
         is InstructionUiItem.CategoryItem -> CATEGORY
