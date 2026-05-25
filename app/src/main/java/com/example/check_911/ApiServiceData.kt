@@ -5,6 +5,7 @@ import com.example.check_911.data.networking.networking.models.UsersDto
 import com.example.check_911.data.networking.networking.models.SurveyUploadRequest
 import com.example.check_911.data.networking.networking.models.TaskAnswerRequest
 import com.example.check_911.data.networking.networking.models.TaskDto
+import com.example.check_911.data.networking.networking.models.InstructionDto
 import com.example.check_911.data.networking.networking.models.reserve.AuthorizationResponse
 import com.example.check_911.data.networking.networking.models.reserve.LoginRequest
 import com.example.check_911.data.networking.networking.models.reserve.SurveyUploadResponse
@@ -87,6 +88,11 @@ interface ApiServiceData {
     suspend fun getTasks(
         @Header("Authorization") token: String
     ): Response<List<TaskDto>>
+
+    @GET("/instruction/get/all")
+    suspend fun getInstructions(
+        @Header("Authorization") token: String
+    ): Response<List<InstructionDto>>
 
 //    метод для отправки выполнения задачи
     @PATCH("/survey_pharmacy_task/id/{id}/set/answer")

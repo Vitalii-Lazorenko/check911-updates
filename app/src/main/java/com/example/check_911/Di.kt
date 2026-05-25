@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.check_911.data.db.MainDb
 import com.example.check_911.data.db.repository.AppUrlRepository
 import com.example.check_911.data.db.repository.AuthorizationRepository
+import com.example.check_911.data.db.repository.InstructionRepository
 import com.example.check_911.data.db.repository.ResultsSurveyRepository
 import com.example.check_911.data.db.repository.SurveyRepository
 import com.example.check_911.data.db.repository.TaskRepository
@@ -49,6 +50,7 @@ val repositoryModule = module {
     single { AuthorizationRepository(get()) }
     single { UsersRepository(get(), get()) }
     single { TaskRepository(get(), get(), get()) }
+    single { InstructionRepository(get()) }
 }
 
 val viewModelModule = module {
@@ -59,6 +61,7 @@ val viewModelModule = module {
     viewModel { SelectionViewModel(get()) }
     viewModel { IpAddressViewModel(get(), get()) }
     viewModel { TaskViewModel(get()) }
+    viewModel { InstructionViewModel(get()) }
     viewModel { TaskDetailsViewModel(get(), get()) }
 }
 
