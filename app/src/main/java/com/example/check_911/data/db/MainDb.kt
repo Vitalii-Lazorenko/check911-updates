@@ -4,12 +4,16 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.example.check_911.data.db.dao.DaoIpAddress
 import com.example.check_911.data.db.dao.DaoUsers
+import com.example.check_911.data.db.dao.InstructionDao
 import com.example.check_911.data.db.dao.ResultsSurveyDao
 import com.example.check_911.data.db.dao.SurveyDao
 import com.example.check_911.data.db.dao.TaskDao
 import com.example.check_911.data.db.dao.TaskResultDao
 import com.example.check_911.data.db.entity.CategoryQuestionsEntity
 import com.example.check_911.data.db.entity.IpAddressEntity
+import com.example.check_911.data.db.entity.InstructionCategoryEntity
+import com.example.check_911.data.db.entity.InstructionDetailEntity
+import com.example.check_911.data.db.entity.InstructionEntity
 import com.example.check_911.data.db.entity.OptionForQuestionsEntity
 import com.example.check_911.data.db.entity.QuestionEntity
 import com.example.check_911.data.db.entity.SurveyAnswerEntity
@@ -30,9 +34,12 @@ import com.example.check_911.data.db.entity.UsersEntity
         SurveyResultEntity::class,
         SurveyAnswerEntity::class,
         TaskEntity::class,
-        TaskResultEntity::class
+        TaskResultEntity::class,
+        InstructionEntity::class,
+        InstructionCategoryEntity::class,
+        InstructionDetailEntity::class
     ],
-    version = 26,
+    version = 27,
     exportSchema = false
 )
 abstract class MainDb : RoomDatabase() {
@@ -43,4 +50,5 @@ abstract class MainDb : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
     abstract fun taskResultDao(): TaskResultDao
+    abstract fun instructionDao(): InstructionDao
 }

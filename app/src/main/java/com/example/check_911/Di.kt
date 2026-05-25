@@ -41,6 +41,7 @@ val dbModule = module {
     single { get<MainDb>().resultsSurveyDao() }
     single { get<MainDb>().taskDao() }
     single { get<MainDb>().taskResultDao() }
+    single { get<MainDb>().instructionDao() }
 }
 
 val repositoryModule = module {
@@ -50,7 +51,7 @@ val repositoryModule = module {
     single { AuthorizationRepository(get()) }
     single { UsersRepository(get(), get()) }
     single { TaskRepository(get(), get(), get()) }
-    single { InstructionRepository(get()) }
+    single { InstructionRepository(get(), get()) }
 }
 
 val viewModelModule = module {
