@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Верхний toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ToolbarStyle"
+        android:elevation="4dp" />
+
+    <!-- Верхушка таблицы -->
+    <TableLayout
+        android:id="@+id/table_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
+        android:background="#EEE"
+        android:padding="8dp">
+
+        <TableRow>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:background="@drawable/divider_vertical"
+                android:text="Всі питання"
+                android:textStyle="bold"
+                android:padding="4dp" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/divider_vertical"
+                android:layout_weight="1"
+                android:text="*"
+                android:textStyle="bold"
+                android:padding="4dp" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/divider_vertical"
+                android:layout_weight="2"
+                android:text="Ціль"
+                android:textStyle="bold"
+                android:padding="4dp" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/divider_vertical"
+                android:layout_weight="2"
+                android:text="Відповідь"
+                android:textStyle="bold"
+                android:padding="4dp" />
+        </TableRow>
+    </TableLayout>
+
+    <!-- Список вопросов -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/table_header"
+        android:layout_above="@id/comment_section">
+
+        <LinearLayout
+            android:id="@+id/question_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <!-- Строка для ввода комментариев -->
+    <LinearLayout
+        android:id="@+id/comment_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="#EEE">
+
+        <EditText
+            android:id="@+id/comment_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Введіть коментар" />
+
+        <!-- Нижний toolbar для выбора ответа -->
+        <LinearLayout
+            android:id="@+id/answer_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:background="?attr/colorPrimaryDark">
+
+            <!-- Кнопки ответа будут добавлены здесь программно -->
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

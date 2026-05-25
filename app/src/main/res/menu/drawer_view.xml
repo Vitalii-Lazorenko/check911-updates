@@ -1,0 +1,24 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="На головну сторінку" />
+<!--        android:title="Home" />-->
+    <item
+        android:id="@+id/nav_settings"
+        android:enabled="false"
+        android:icon="@drawable/ic_settings"
+        android:title="Налаштування\n(не реалізовано)"
+        android:visible="true" />
+<!--        android:title="Settings" />-->
+    <item
+        android:id="@+id/nav_support"
+        android:icon="@drawable/ic_support"
+        android:title="Відправити логи" />
+
+    <item
+        android:id="@+id/nav_update"
+        android:icon="@drawable/ic_update"
+        android:title="Перевірити оновлення" />
+<!--        android:title="Support" />-->
+</menu>

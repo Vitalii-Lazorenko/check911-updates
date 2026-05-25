@@ -1,0 +1,36 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_clear_answers"
+        android:title="Очистка всіх відповідей" />
+    <item
+        android:id="@+id/menu_delete_survey"
+        android:title="Видалити опитування" />
+    <item
+        android:id="@+id/menu_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Пошук"
+         />
+    <item
+        android:id="@+id/menu_filter"
+        android:icon="@drawable/ic_filter_list"
+        android:title="Фільтр питань"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/filter_completed"
+                android:title="Заповнені" />
+            <item
+                android:id="@+id/filter_incomplete"
+                android:title="Незавершені питання" />
+            <item
+                android:id="@+id/filter_all"
+                android:title="Всі питання" />
+            <item
+                android:id="@+id/filter_wrong_answers"
+                android:title="Питання з відповідями не рівними цілі" />
+        </menu>
+    </item>
+
+
+</menu>

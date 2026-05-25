@@ -1,0 +1,83 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <!-- Колонка "Вопрос" -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="5"
+        android:background="@drawable/border_background">
+
+        <TextView
+            android:id="@+id/textViewQuestion"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:lineSpacingExtra="2dp"
+            android:padding="8dp"
+            android:text="Текст вопроса"
+            android:textColor="@android:color/black" />
+    </FrameLayout>
+
+    <!-- Колонка "*" -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:background="@drawable/border_background"
+        android:padding="5dp">
+
+        <ImageView
+            android:id="@+id/imageViewPhoto"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="start|center_vertical"
+            android:src="@drawable/ic_camera"
+            android:visibility="invisible" />
+
+        <ImageView
+            android:id="@+id/imageViewComment"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="end|center_vertical"
+            android:src="@drawable/ic_comment"
+            android:visibility="invisible" />
+    </FrameLayout>
+
+    <!-- Колонка "Цель" -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:background="@drawable/border_background">
+
+        <TextView
+            android:id="@+id/textViewTarget"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Цель"
+            android:textColor="@android:color/darker_gray" />
+    </FrameLayout>
+
+    <!-- Колонка "Ответ" -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:background="@drawable/border_background">
+
+        <TextView
+            android:id="@+id/textViewAnswer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Ответ"
+            android:textColor="@android:color/black" />
+    </FrameLayout>
+
+</LinearLayout>

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:background="?attr/colorPrimary"
+        android:title="Назва чек-листа"
+        android:titleTextColor="@android:color/white"
+        android:theme="@style/ToolbarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        />
+
+    <LinearLayout
+        android:id="@+id/searchBarContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/purple_500"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/editTextSearch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:autoText="false"
+            android:background="@color/purple_700"
+            android:drawableEnd="@drawable/ic_clear_search"
+            android:hint="Пошук запитання..."
+            android:inputType="text"
+            android:maxLines="1"
+            android:padding="8dp"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"
+
+            android:textColor="@color/white"
+            android:textColorHint="@color/light_gray" />
+        <!--        android:paddingTop="8dp"-->
+        <!--        android:paddingBottom="8dp"/>-->
+
+<!--        <ImageButton-->
+<!--            android:id="@+id/btnClearSearch"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="?attr/selectableItemBackground"-->
+<!--            android:contentDescription="Очистити"-->
+<!--            android:src="@android:drawable/ic_menu_close_clear_cancel"-->
+<!--            android:visibility="visible" />-->
+    </LinearLayout>
+
+
+    <!-- Заголовок таблицы -->
+    <LinearLayout
+        android:padding="8dp"
+        android:orientation="horizontal"
+        android:background="@color/light_gray"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Все вопросы (По категории) -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="5"
+            android:text="Усі питання (За категорією)"
+            android:textStyle="bold" />
+
+        <!-- * (звездочка) -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:gravity="center"
+            android:text="*"
+            android:textStyle="bold" />
+
+        <!-- Цель -->
+        <TextView
+            android:layout_weight="2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Ціль"
+            android:textStyle="bold" />
+
+        <!-- Ответ -->
+        <TextView
+            android:layout_weight="2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Відповідь"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewSurvey"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5" />
+
+    <!-- Комментарий -->
+    <EditText
+        android:id="@+id/editTextComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLength="1024"
+
+        android:hint="Коментар"
+        android:padding="8dp" />
+
+<!--    <com.google.android.material.textfield.TextInputLayout-->
+<!--        android:id="@+id/commentInputLayout"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="Коментар"-->
+<!--        app:counterEnabled="true"-->
+<!--        app:counterMaxLength="1024"-->
+<!--        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"-->
+<!--        app:boxBackgroundMode="outline">-->
+
+<!--        <com.google.android.material.textfield.TextInputEditText-->
+<!--            android:id="@+id/editTextComment"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:inputType="text"-->
+<!--            android:maxLength="1024"-->
+<!--            android:maxLines="1"-->
+<!--            android:singleLine="true"-->
+<!--            android:ellipsize="end"-->
+<!--            android:imeOptions="actionDone"/>-->
+<!--    </com.google.android.material.textfield.TextInputLayout>-->
+
+
+    <!-- Bottom Bar -->
+    <LinearLayout
+
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:layout_alignParentBottom="true"
+        android:background="?attr/colorPrimaryDark"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <!-- Контейнер для кнопок ответов -->
+        <LinearLayout
+            android:id="@+id/answerButtonsContainer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="9"
+            android:gravity="start"
+            android:orientation="horizontal" />
+
+        <!-- Контейнер для кнопок "вверх" и "вниз" -->
+        <LinearLayout
+            android:id="@+id/navigationButtonsContainer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/btnArrowUp"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="5"
+                android:background="?attr/selectableItemBackground"
+                android:src="@drawable/ic_arrow_up" />
+
+            <ImageButton
+                android:id="@+id/btnArrowDown"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="5"
+                android:background="?attr/selectableItemBackground"
+                android:src="@drawable/ic_arrow_down" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</LinearLayout>
+
+

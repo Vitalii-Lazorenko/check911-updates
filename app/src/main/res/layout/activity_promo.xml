@@ -1,0 +1,50 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:id="@+id/tvPromoHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:text="Доброго дня, шановні завідувачі та старші змін!\n\nМаємо для вас хороші новини – вже доступна оновлена версія додатка екка_міні для Android"
+            android:textAlignment="center"
+            android:textColor="#000000"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/promoIcon"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="New App Icon"
+            android:src="@drawable/ic_ekka_mini_app" />
+
+
+        <TextView
+            android:id="@+id/tvPromoDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#000000"
+            android:textIsSelectable="false"
+            android:text="🔹 Що нового?\n✔️ Додано розділ скасованих бронювань.\n✔️ Розділ для збірки бронювань видає коректне повідомлення при відсутніх бронюваннях для комплектації.\n\n❗️ Важливо! Переконайтеся, що в аптеці використовується саме остання версія\n\n🔄 Як оновити?\n✅ Відскануйте QR-код на зеленому плакаті (&quot;Дії на випадок відключення електроенергії&quot;).\n✅ Оновіть додаток через екка або встановіть з файлу у цьому повідомленні.\n\nНагадуємо, про основні функції додатку:\n- Робота з чеком: Створення та відпуск чеку, як онлайн так і офлайн.\n- Робота з бронями: Відпуск, пошук та збір броней.\n- Інвентаризація, Редагування полиць.\n- Сканування накладних.\n- Робота з клієнтами, створення карти, реєстрація в боті.\n- Можливість звернутися до підтримки в бот айті.\n- Телефони координаційних служб.\n- Інструкції по роботі з додатком.\n\nДякуємо за вашу увагу!"
+        android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btnContinue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Продовжити" />
+    </LinearLayout>
+</ScrollView>

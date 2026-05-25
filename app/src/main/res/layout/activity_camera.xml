@@ -1,0 +1,165 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Камера превью -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/viewFinder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Кнопка сделать фото -->
+    <ImageButton
+        android:id="@+id/btnTakePhoto"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/bg_shutter_button" />
+
+    <!-- Кнопка закрыть -->
+    <ImageButton
+        android:id="@+id/btnCloseCamera"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="44dp"
+        android:background="@drawable/bg_close_button"
+        android:src="@drawable/ic_close"
+        app:tint="@android:color/white" />
+
+    <!-- Кнопка переключения камеры -->
+    <ImageButton
+        android:id="@+id/switchCameraButton"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="44dp"
+        android:background="@drawable/bg_close_button"
+        android:src="@drawable/ic_switch_camera" />
+
+<!--    &lt;!&ndash; Контейнер вспышки &ndash;&gt;-->
+<!--    <LinearLayout-->
+<!--        android:id="@+id/flashMenu"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="top|end"-->
+<!--        android:layout_margin="24dp"-->
+<!--        android:orientation="vertical"-->
+<!--        android:visibility="gone">-->
+
+<!--        <ImageButton-->
+<!--            android:id="@+id/btnFlashAuto"-->
+<!--            android:layout_width="48dp"-->
+<!--            android:layout_height="48dp"-->
+<!--            android:background="@drawable/bg_close_button"-->
+<!--            android:src="@drawable/ic_flash_auto"-->
+<!--            app:tint="@android:color/white" />-->
+
+<!--        <ImageButton-->
+<!--            android:id="@+id/btnFlashOn"-->
+<!--            android:layout_width="48dp"-->
+<!--            android:layout_height="48dp"-->
+<!--            android:background="@drawable/bg_close_button"-->
+<!--            android:src="@drawable/ic_flash_on"-->
+<!--            app:tint="@android:color/white" />-->
+
+<!--        <ImageButton-->
+<!--            android:id="@+id/btnFlashOff"-->
+<!--            android:layout_width="48dp"-->
+<!--            android:layout_height="48dp"-->
+<!--            android:background="@drawable/bg_close_button"-->
+<!--            android:src="@drawable/ic_flash_off"-->
+<!--            app:tint="@android:color/white" />-->
+<!--    </LinearLayout>-->
+
+<!--    &lt;!&ndash; Основная кнопка для управления вспышкой &ndash;&gt;-->
+<!--    <ImageButton-->
+<!--        android:id="@+id/btnFlash"-->
+<!--        android:layout_width="56dp"-->
+<!--        android:layout_height="56dp"-->
+<!--        android:layout_gravity="start|top"-->
+<!--        android:layout_margin="24dp"-->
+<!--        android:background="@drawable/bg_close_button"-->
+<!--        android:src="@drawable/ic_flash_auto"-->
+<!--        app:tint="@android:color/white" />-->
+
+    <!-- Кнопка управления вспышкой -->
+    <FrameLayout
+        android:id="@+id/flashContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="24dp">
+
+        <!-- Главная кнопка (отображает текущий режим) -->
+        <ImageButton
+            android:id="@+id/btnFlash"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_close_button"
+            android:src="@drawable/ic_flash_auto"
+            android:contentDescription="Flash mode" />
+
+        <!-- Контейнер для режимов вспышки (изначально скрыт) -->
+        <LinearLayout
+            android:id="@+id/flashModesLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:translationY="-60dp"
+            android:layout_marginTop="64dp">
+
+            <ImageButton
+                android:id="@+id/btnFlashAuto"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_close_button"
+                android:src="@drawable/ic_flash_auto" />
+
+            <ImageButton
+                android:id="@+id/btnFlashOn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_close_button"
+                android:src="@drawable/ic_flash_on" />
+
+            <ImageButton
+                android:id="@+id/btnFlashOff"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_close_button"
+                android:src="@drawable/ic_flash_off" />
+        </LinearLayout>
+    </FrameLayout>
+
+
+    <!-- Зум управление -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|end"
+        android:layout_margin="24dp"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/btnZoomIn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_close_button"
+            android:src="@drawable/ic_zoom_in"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btnZoomOut"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_close_button"
+            android:src="@drawable/ic_zoom_out"
+            app:tint="@android:color/white" />
+    </LinearLayout>
+
+</FrameLayout>
