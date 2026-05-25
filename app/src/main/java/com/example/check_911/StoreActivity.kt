@@ -25,6 +25,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
+import com.example.check_911.data.db.entity.InstructionEntity
 import com.example.check_911.data.db.entity.SurveyAnswerEntity
 import com.example.check_911.data.db.entity.SurveyEntity
 import com.example.check_911.data.db.entity.SurveyResultEntity
@@ -576,6 +577,13 @@ private fun addSurveyButtons(surveys: List<SurveyEntity>) {
         addScunButton()
         addManualInputButton()
 
+        lifecycleScope.launch {
+            val instructions = database.instructionDao().getAllInstructions()
+            removeInstructionButtonsIfExists()
+            addInstructionButtons(instructions)
+            updateButtonNumbers()
+        }
+
         // Добавим кнопку "МОЇ ЗАВДАННЯ"
 //        addTasksButton(tasksCount = 100)
         lifecycleScope.launch {
@@ -924,6 +932,35 @@ private fun addTasksButton(tasksCount: Int) {
     }
 }
 
+private fun addInstructionButtons(instructions: List<InstructionEntity>) {
+    instructions.forEach { instruction ->
+        val circleNumber = createCircleNumberTextView(
+            (buttonContainer.childCount + 1).toString(),
+            true
+        )
+
+        val button = createButton(
+            "Інструкція: ${instruction.title}",
+            R.drawable.ic_assignment,
+            true
+        )
+
+        val layout = createButtonLayout(circleNumber, button)
+        layout.tag = "INSTRUCTION_BUTTON"
+
+        val insertIndex = if (buttonContainer.childCount > 0) buttonContainer.childCount - 1 else 0
+        buttonContainer.addView(layout, insertIndex)
+
+        button.setOnClickListener {
+            val intent = Intent(this, InstructionsActivity::class.java).apply {
+                putExtra(InstructionsActivity.EXTRA_INSTRUCTION_ID, instruction.id)
+                putExtra(InstructionsActivity.EXTRA_INSTRUCTION_TITLE, instruction.title)
+            }
+            startActivity(intent)
+        }
+    }
+}
+
 //    private fun addBadgeToButton(button: Button, count: Int) {
 //
 //        val text = "МОЇ ЗАВДАННЯ"
@@ -1024,16 +1061,25 @@ private fun createInlineBadge(count: Int, isActive: Boolean): TextView {
     }
 }
 
-    private fun removeTasksButtonIfExists() {
-        for (i in 0 until buttonContainer.childCount) {
-            val view = buttonContainer.getChildAt(i)
+private fun removeTasksButtonIfExists() {
+    for (i in 0 until buttonContainer.childCount) {
+        val view = buttonContainer.getChildAt(i)
 
             if (view.tag == "TASKS_BUTTON") {
                 buttonContainer.removeView(view)
                 return
             }
+    }
+}
+
+private fun removeInstructionButtonsIfExists() {
+    for (i in buttonContainer.childCount - 1 downTo 0) {
+        val view = buttonContainer.getChildAt(i)
+        if (view.tag == "INSTRUCTION_BUTTON") {
+            buttonContainer.removeViewAt(i)
         }
     }
+}
 
     private fun updateButtonNumbers() {
         for (i in 0 until buttonContainer.childCount) {
@@ -2693,3 +2739,4 @@ private fun showLoadingDialog() {
         }
     }
 }
+

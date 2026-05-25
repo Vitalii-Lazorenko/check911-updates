@@ -64,6 +64,9 @@
             android:name=".TaskDetailsActivity"
             android:exported="false" />
         <activity
+            android:name=".InstructionsActivity"
+            android:exported="false" />
+        <activity
             android:name=".SelectionActivity"
             android:exported="false" />
         <activity
