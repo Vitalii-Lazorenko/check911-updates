@@ -987,7 +987,7 @@ private fun addInstructionTasksButton(tasksCount: Int) {
     )
 
     val button = createButton(
-        "ЗАДАЧІ ПО ІНСТРУКЦІЯХ",
+        "ЗАДАЧІ (ІНСТРУКЦІЇ)",
         R.drawable.ic_tasks,
         isActive
     )
@@ -1102,7 +1102,7 @@ private fun addInstructionButtons(
 //    }
 private fun addBadgeToButton(button: Button, count: Int, isActive: Boolean) {
 
-    val text = "МОЇ ЗАВДАННЯ"
+    val text = button.text?.toString().orEmpty()
     val spannable = SpannableString("$text  x")
 
     val badgeView = createInlineBadge(count, isActive)
