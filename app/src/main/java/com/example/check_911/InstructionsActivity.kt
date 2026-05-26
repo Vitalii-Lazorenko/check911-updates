@@ -183,7 +183,7 @@ class InstructionsActivity : AppCompatActivity() {
         adapter.highlightIncomplete(emptySet())
         lifecycleScope.launch {
             persistAllAnswers("ready")
-            (application as App).database.instructionResultDao().upsertResult(
+            (application as App).database.instructionResultDao().upsertResultSafe(
                 InstructionResultEntity(
                     instructionId = instructionId,
                     instructionTitle = instructionTitle,
@@ -476,7 +476,7 @@ class InstructionsActivity : AppCompatActivity() {
                 suppressCommentWatcher = false
                 lifecycleScope.launch {
                     (application as App).database.instructionResultDao().clearAnswersForInstruction(instructionId)
-                    (application as App).database.instructionResultDao().upsertResult(
+                    (application as App).database.instructionResultDao().upsertResultSafe(
                         InstructionResultEntity(instructionId, instructionTitle, "draft")
                     )
                 }
@@ -546,7 +546,7 @@ class InstructionsActivity : AppCompatActivity() {
 
             val existingResult = db.instructionResultDao().getResult(instructionId)
             if (existingResult == null) {
-                db.instructionResultDao().upsertResult(
+                db.instructionResultDao().upsertResultSafe(
                     InstructionResultEntity(instructionId, instructionTitle, "draft")
                 )
             }
@@ -644,7 +644,7 @@ class InstructionsActivity : AppCompatActivity() {
         }
 
         val current = db.instructionResultDao().getResult(instructionId)
-        db.instructionResultDao().upsertResult(
+        db.instructionResultDao().upsertResultSafe(
             InstructionResultEntity(
                 instructionId = instructionId,
                 instructionTitle = instructionTitle,
@@ -661,7 +661,7 @@ class InstructionsActivity : AppCompatActivity() {
         val group = groupByDetail[detail.localId]
         val existingResult = db.instructionResultDao().getResult(instructionId)
         if (existingResult == null) {
-            db.instructionResultDao().upsertResult(
+            db.instructionResultDao().upsertResultSafe(
                 InstructionResultEntity(instructionId, instructionTitle, "draft")
             )
         }

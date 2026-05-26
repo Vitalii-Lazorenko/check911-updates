@@ -10,8 +10,20 @@ import com.example.check_911.data.db.entity.InstructionResultEntity
 
 @Dao
 interface InstructionResultDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertResult(result: InstructionResultEntity)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertResult(result: InstructionResultEntity): Long
+
+    @Query(
+        "UPDATE instruction_results " +
+            "SET instructionTitle = :instructionTitle, status = :status, sentDate = :sentDate " +
+            "WHERE instructionId = :instructionId"
+    )
+    suspend fun updateResult(
+        instructionId: String,
+        instructionTitle: String,
+        status: String,
+        sentDate: String?
+    )
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAnswer(answer: InstructionAnswerEntity)
@@ -42,6 +54,19 @@ interface InstructionResultDao {
 
     @Query("UPDATE instruction_results SET status = :status, sentDate = :sentDate WHERE instructionId = :instructionId")
     suspend fun updateResultStatus(instructionId: String, status: String, sentDate: String?)
+
+    @Transaction
+    suspend fun upsertResultSafe(result: InstructionResultEntity) {
+        val inserted = insertResult(result)
+        if (inserted == -1L) {
+            updateResult(
+                instructionId = result.instructionId,
+                instructionTitle = result.instructionTitle,
+                status = result.status,
+                sentDate = result.sentDate
+            )
+        }
+    }
 
     @Transaction
     suspend fun replaceInstructionAnswers(instructionId: String, answers: List<InstructionAnswerEntity>) {
