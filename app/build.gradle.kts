@@ -13,13 +13,13 @@ android {
         applicationId = "com.example.check_911"
         minSdk = 26 //24
         targetSdk = 34
-        versionCode = 39 //08.04.26 //37 //07.04.26 //36 //13.03.26 //35 //11.03.26 //34 //26.02.26 //33 //11.02.26 //32 //30.12.25 //31 //24.11.25 //30 //12.11.25 //29 //17.10.25//26 //25 //08.10.25 //23 //07.10.25 //21 //06.10.25 //20 //30.09.25 //19 //29.09.25 //18 //24.09.25 //17 //23.09.25 //16 //13.09.25 //14 //10.09.25 //13 //04.09.25 //12// 01.09.25 //11 //13.08.25 //10 //11.08.25 // 9 //29.07.25
-        versionName = "15.04.26"
+        versionCode = 40 //26.05.26 //39 //08.04.26 //37 //07.04.26 //36 //13.03.26 //35 //11.03.26 //34 //26.02.26 //33 //11.02.26 //32 //30.12.25 //31 //24.11.25 //30 //12.11.25 //29 //17.10.25//26 //25 //08.10.25 //23 //07.10.25 //21 //06.10.25 //20 //30.09.25 //19 //29.09.25 //18 //24.09.25 //17 //23.09.25 //16 //13.09.25 //14 //10.09.25 //13 //04.09.25 //12// 01.09.25 //11 //13.08.25 //10 //11.08.25 // 9 //29.07.25
+        versionName = "26.05.26"
 
         // дата версии
-        buildConfigField("String", "DATE_VERSION", "\"15.04.26\"")
-        buildConfigField("Boolean", "DEBUG_VERSION", "true")
-//        buildConfigField("Boolean", "DEBUG_VERSION", "false")
+        buildConfigField("String", "DATE_VERSION", "\"26.05.26\"")
+//        buildConfigField("Boolean", "DEBUG_VERSION", "true")
+        buildConfigField("Boolean", "DEBUG_VERSION", "false")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
