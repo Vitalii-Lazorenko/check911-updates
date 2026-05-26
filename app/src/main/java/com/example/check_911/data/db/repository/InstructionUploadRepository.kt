@@ -23,9 +23,10 @@ class InstructionUploadRepository(
         gammaId: Long,
         dateVersion: String
     ) {
+        val parsedDateVersion = parseDateVersion(dateVersion)
         val ready = dao.getAllResults().filter { it.status == "ready" }
         ready.forEach { result ->
-            uploadSingleInstruction(token, pharmacyId, gammaId, dateVersion, result.instructionId)
+            uploadSingleInstruction(token, pharmacyId, gammaId, parsedDateVersion, result.instructionId)
         }
     }
 
@@ -33,7 +34,7 @@ class InstructionUploadRepository(
         token: String,
         pharmacyId: Long,
         gammaId: Long,
-        dateVersion: String,
+        dateVersion: Date?,
         instructionId: String
     ) {
         val answers = dao.getAnswersByInstruction(instructionId).filter { !it.photoPath.isNullOrBlank() }
@@ -99,5 +100,12 @@ class InstructionUploadRepository(
         if (!response.isSuccessful) {
             throw Exception("instruction_log/accept/file error ${response.code()}: ${response.errorBody()?.string()}")
         }
+    }
+
+    private fun parseDateVersion(raw: String): Date? {
+        val input = SimpleDateFormat("dd.MM.yy", Locale.getDefault()).apply {
+            isLenient = false
+        }
+        return runCatching { input.parse(raw.trim()) }.getOrNull()
     }
 }

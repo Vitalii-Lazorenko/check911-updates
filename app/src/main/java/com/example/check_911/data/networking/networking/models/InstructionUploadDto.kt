@@ -1,9 +1,11 @@
 package com.example.check_911.data.networking.networking.models
 
+import java.util.Date
+
 data class InstructionLogPostRequest(
     val pharmacyId: Long,
     val gammaId: Long,
-    val dateVersion: String,
+    val dateVersion: Date?,
     val instructionHeaderId: String
 )
 
