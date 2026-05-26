@@ -30,7 +30,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.check_911.data.db.entity.InstructionAnswerEntity
 import com.example.check_911.data.db.entity.InstructionResultEntity
 import kotlinx.coroutines.launch
+import java.io.FileOutputStream
 import java.io.File
+import android.graphics.BitmapFactory
 import java.util.UUID
 
 private enum class InstructionFilterType {
@@ -67,7 +69,8 @@ class InstructionsActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val selected = adapter.getSelectedDetail() ?: return@registerForActivityResult
-            val path = result.data?.getStringExtra("photoPath") ?: return@registerForActivityResult
+            val rawPath = result.data?.getStringExtra("photoPath") ?: return@registerForActivityResult
+            val path = compressImage(rawPath)
             val groupKey = UUID.randomUUID().toString()
 
             photoByDetail[selected.localId] = path
@@ -85,7 +88,8 @@ class InstructionsActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val selected = adapter.getSelectedDetail() ?: return@registerForActivityResult
-            val path = currentPhotoPath ?: return@registerForActivityResult
+            val rawPath = currentPhotoPath ?: return@registerForActivityResult
+            val path = compressImage(rawPath)
             val file = File(path)
             if (!file.exists() || file.length() <= 0L) return@registerForActivityResult
             val groupKey = UUID.randomUUID().toString()
@@ -409,6 +413,27 @@ class InstructionsActivity : AppCompatActivity() {
         }
     }
 
+    private fun compressImage(path: String, quality: Int = 70): String {
+        return runCatching {
+            val source = File(path)
+            if (!source.exists()) return path
+            val bitmap = BitmapFactory.decodeFile(source.absolutePath) ?: return path
+            val compressed = File(source.parentFile, "compressed_${source.nameWithoutExtension}.jpg")
+            FileOutputStream(compressed).use { out ->
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, out)
+            }
+            bitmap.recycle()
+            if (compressed.exists() && compressed.length() > 0L) {
+                if (compressed.absolutePath != source.absolutePath) {
+                    runCatching { source.delete() }
+                }
+                compressed.absolutePath
+            } else {
+                path
+            }
+        }.getOrDefault(path)
+    }
+
     private fun setupCommentWatcher() {
         commentEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
@@ -519,10 +544,22 @@ class InstructionsActivity : AppCompatActivity() {
             )
 
             val savedAnswers = db.instructionResultDao().getAnswersByInstruction(instructionId)
+            val detailsById = instruction.categories
+                .flatMap { category -> category.details }
+                .groupBy { it.id }
+            val detailsByLegacyLocalId = instruction.categories
+                .flatMap { category -> category.details.map { detail -> "${category.category.id}_${detail.id}_${detail.orderNumber}" to detail.localId } }
+                .toMap()
             savedAnswers.forEach {
-                if (!it.photoPath.isNullOrBlank()) photoByDetail[it.detailLocalId] = it.photoPath
-                if (!it.comment.isNullOrBlank()) commentByDetail[it.detailLocalId] = it.comment
-                if (!it.groupKey.isNullOrBlank()) groupByDetail[it.detailLocalId] = it.groupKey
+                val resolvedLocalId = when {
+                    detailsByLegacyLocalId.containsKey(it.detailLocalId) -> detailsByLegacyLocalId[it.detailLocalId]
+                    detailsById[it.detailId].isNullOrEmpty() -> null
+                    else -> detailsById[it.detailId]?.firstOrNull()?.localId
+                } ?: it.detailLocalId
+
+                if (!it.photoPath.isNullOrBlank()) photoByDetail[resolvedLocalId] = it.photoPath
+                if (!it.comment.isNullOrBlank()) commentByDetail[resolvedLocalId] = it.comment
+                if (!it.groupKey.isNullOrBlank()) groupByDetail[resolvedLocalId] = it.groupKey
             }
 
             allItems = buildList {

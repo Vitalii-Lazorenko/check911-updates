@@ -44,9 +44,13 @@ class InstructionRepository(
 
         val detailEntities = instructions.flatMap { instruction ->
             instruction.categories.flatMap { category ->
+                val duplicateCounter = mutableMapOf<String, Int>()
                 category.details.mapIndexed { index, detail ->
+                    val signature = "${detail.id}_${detail.templateId}"
+                    val duplicateIndex = duplicateCounter.getOrDefault(signature, 0)
+                    duplicateCounter[signature] = duplicateIndex + 1
                     InstructionDetailEntity(
-                        localId = "${category.id}_${detail.id}_$index",
+                        localId = "${category.id}_${detail.id}_${detail.templateId}_$duplicateIndex",
                         id = detail.id,
                         categoryId = category.id,
                         title = detail.title,
