@@ -27,6 +27,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.check_911.data.utils.AppLogger
 import com.example.check_911.data.db.entity.InstructionAnswerEntity
 import com.example.check_911.data.db.entity.InstructionResultEntity
 import kotlinx.coroutines.launch
@@ -549,6 +550,11 @@ class InstructionsActivity : AppCompatActivity() {
             }
 
             val savedAnswers = db.instructionResultDao().getAnswersByInstruction(instructionId)
+            AppLogger.log(
+                "InstructionsActivity",
+                "loadInstruction: instructionId=$instructionId, savedAnswers=${savedAnswers.size}",
+                this@InstructionsActivity
+            )
             val detailsById = instruction.categories
                 .flatMap { category -> category.details }
                 .groupBy { it.id }
@@ -566,6 +572,11 @@ class InstructionsActivity : AppCompatActivity() {
                 if (!it.comment.isNullOrBlank()) commentByDetail[resolvedLocalId] = it.comment
                 if (!it.groupKey.isNullOrBlank()) groupByDetail[resolvedLocalId] = it.groupKey
             }
+            AppLogger.log(
+                "InstructionsActivity",
+                "loadInstruction mapped: photos=${photoByDetail.size}, comments=${commentByDetail.size}, groups=${groupByDetail.size}",
+                this@InstructionsActivity
+            )
 
             allItems = buildList {
                 instruction.categories.forEach { cat ->
@@ -616,6 +627,12 @@ class InstructionsActivity : AppCompatActivity() {
         }
 
         db.instructionResultDao().replaceInstructionAnswers(instructionId, answers)
+        val afterSave = db.instructionResultDao().getAnswersByInstruction(instructionId)
+        AppLogger.log(
+            "InstructionsActivity",
+            "persistAllAnswers: instructionId=$instructionId, status=$statusOverride, detailItems=${detailItems.size}, saved=${answers.size}, dbAfterSave=${afterSave.size}",
+            this@InstructionsActivity
+        )
         val currentPaths = answers.mapNotNull { it.photoPath }.toSet()
         (previousPaths - currentPaths).forEach { path ->
             runCatching {

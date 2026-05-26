@@ -600,6 +600,11 @@ private fun addSurveyButtons(surveys: List<SurveyEntity>) {
             removeInstructionButtonsIfExists()
             addInstructionButtons(instructions, freshResults)
             val hasReadyInstruction = freshResults.values.any { it.status == "ready" }
+            AppLogger.log(
+                "StoreActivity",
+                "instruction results loaded: total=${freshResults.size}, ready=${freshResults.values.count { it.status == "ready" }}",
+                this@StoreActivity
+            )
             if (hasReadyInstruction && !hasReadySurvey) {
                 removeSendButtonIfExists()
                 addSendButton(true)
