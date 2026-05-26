@@ -12,6 +12,7 @@ import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.Gravity
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
@@ -20,6 +21,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -160,7 +162,7 @@ class InstructionsActivity : AppCompatActivity() {
                 true
             }
             R.id.action_options -> {
-                showInstructionOptionsMenu(toolbar)
+                showInstructionOptionsMenu(resolveOptionsAnchor())
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -197,7 +199,7 @@ class InstructionsActivity : AppCompatActivity() {
     }
 
     private fun showInstructionOptionsMenu(anchor: View) {
-        val popup = PopupMenu(this, anchor)
+        val popup = PopupMenu(this, anchor, Gravity.END)
         popup.menuInflater.inflate(R.menu.instruction_options_menu, popup.menu)
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
@@ -225,6 +227,20 @@ class InstructionsActivity : AppCompatActivity() {
             }
         }
         popup.show()
+    }
+
+    private fun resolveOptionsAnchor(): View {
+        val actionView = toolbar.findViewById<View>(R.id.action_options)
+        if (actionView != null) return actionView
+
+        val actionMenuView = (0 until toolbar.childCount)
+            .map { toolbar.getChildAt(it) }
+            .firstOrNull { it is ActionMenuView } as? ActionMenuView
+
+        if (actionMenuView != null && actionMenuView.childCount > 0) {
+            return actionMenuView.getChildAt(actionMenuView.childCount - 1)
+        }
+        return toolbar
     }
 
     private fun setupList() {
