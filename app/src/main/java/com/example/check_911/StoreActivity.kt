@@ -984,9 +984,9 @@ private fun addInstructionButtons(
         )
 
         val buttonText = when {
-            isSent -> "??????????: ${instruction.title}\n???????????"
-            isReady -> "??????????: ${instruction.title}\n?????? ?? ?????????"
-            else -> "??????????: ${instruction.title}\n? ??????? ???????????"
+            isSent -> "Інструкція: ${instruction.title}\nВІДПРАВЛЕНО"
+            isReady -> "Інструкція: ${instruction.title}\nГОТОВО ДО ВІДПРАВКИ"
+            else -> "Інструкція: ${instruction.title}\nВ ПРОЦЕСІ ПРОХОДЖЕННЯ"
         }
         val button = createButton(buttonText, R.drawable.ic_assignment, true)
 
@@ -999,15 +999,15 @@ private fun addInstructionButtons(
         button.setOnClickListener {
             if (isSent) {
                 AlertDialog.Builder(this@StoreActivity)
-                    .setTitle("?????????? ??? ???????????")
-                    .setMessage("?? ?????? ???????? ????????? ?? ?????????? ???????????")
-                    .setPositiveButton("???????? ?????????") { _, _ ->
+                    .setTitle("Інструкцію вже відправлено")
+                    .setMessage("Ви хочете повторно відправити чи редагувати інструкцію?")
+                    .setPositiveButton("Повторно відправити") { _, _ ->
                         lifecycleScope.launch {
                             database.instructionResultDao().updateResultStatus(instruction.id, "ready", null)
                             uploadAllSurveyResults()
                         }
                     }
-                    .setNegativeButton("??????????") { _, _ ->
+                    .setNegativeButton("Редагувати") { _, _ ->
                         lifecycleScope.launch {
                             database.instructionResultDao().updateResultStatus(instruction.id, "draft", null)
                             val intent = Intent(this@StoreActivity, InstructionsActivity::class.java).apply {
@@ -1017,7 +1017,7 @@ private fun addInstructionButtons(
                             startActivity(intent)
                         }
                     }
-                    .setNeutralButton("?????????", null)
+                    .setNeutralButton("Скасувати", null)
                     .show()
             } else {
                 val intent = Intent(this, InstructionsActivity::class.java).apply {
