@@ -86,7 +86,7 @@ class InstructionUploadRepository(
         val logHeaderPart = logHeaderId.toRequestBody("text/plain".toMediaTypeOrNull())
         val commentPart = (first.comment ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
         val detailsParts = answers.map {
-            it.detailId.toRequestBody("text/plain".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("details[]", it.detailId)
         }
 
         val response = api.uploadInstructionPhoto(

@@ -110,7 +110,7 @@ interface ApiServiceData {
         @Part file: MultipartBody.Part,
         @Part("logHeaderId") logHeaderId: RequestBody,
         @Part("comment") comment: RequestBody,
-        @Part("details[]") details: List<RequestBody>
+        @Part details: List<MultipartBody.Part>
     ): Response<Unit>
 
 //    метод для отправки выполнения задачи
