@@ -16,6 +16,7 @@ class InstructionAdapter(
     private val visibleItems = mutableListOf<InstructionUiItem>()
     private val expandedCategories = mutableSetOf<String>()
     private val completedDetailIds = mutableSetOf<String>()
+    private val incompleteDetailIds = mutableSetOf<String>()
     private var selectedDetailLocalId: String? = null
 
     companion object {
@@ -36,6 +37,12 @@ class InstructionAdapter(
     fun setCompletedDetails(localIds: Set<String>) {
         completedDetailIds.clear()
         completedDetailIds.addAll(localIds)
+        notifyDataSetChanged()
+    }
+
+    fun highlightIncomplete(localIds: Set<String>) {
+        incompleteDetailIds.clear()
+        incompleteDetailIds.addAll(localIds)
         notifyDataSetChanged()
     }
 
@@ -95,6 +102,29 @@ class InstructionAdapter(
         return visibleItems.indexOfFirst {
             it is InstructionUiItem.DetailItem && it.detail.localId == selectedId
         }
+    }
+
+    fun selectNearestIncomplete(): InstructionDetailUi? {
+        if (incompleteDetailIds.isEmpty()) return null
+        val detailIndices = visibleItems.mapIndexedNotNull { index, item ->
+            if (item is InstructionUiItem.DetailItem) index else null
+        }
+        if (detailIndices.isEmpty()) return null
+        val current = getSelectedAdapterPosition()
+        val currentPos = if (current == RecyclerView.NO_POSITION) 0 else current
+        val target = detailIndices
+            .mapNotNull { idx ->
+                val item = visibleItems[idx] as InstructionUiItem.DetailItem
+                if (incompleteDetailIds.contains(item.detail.localId)) idx else null
+            }
+            .minByOrNull { kotlin.math.abs(it - currentPos) }
+            ?: return null
+
+        val nextItem = visibleItems[target] as InstructionUiItem.DetailItem
+        selectedDetailLocalId = nextItem.detail.localId
+        onDetailSelected(nextItem.detail)
+        notifyDataSetChanged()
+        return nextItem.detail
     }
 
     override fun getItemViewType(position: Int): Int = when (visibleItems[position]) {
@@ -167,7 +197,12 @@ class InstructionAdapter(
             camera.setColorFilter(if (completed) Color.BLUE else Color.RED)
 
             val selected = selectedDetailLocalId == detail.localId
-            itemView.setBackgroundColor(if (selected) Color.parseColor("#FCFEBB") else Color.TRANSPARENT)
+            val background = when {
+                selected -> Color.parseColor("#FCFEBB")
+                incompleteDetailIds.contains(detail.localId) -> Color.parseColor("#FFEBEE")
+                else -> Color.TRANSPARENT
+            }
+            itemView.setBackgroundColor(background)
 
             itemView.setOnClickListener {
                 val previous = selectedDetailLocalId

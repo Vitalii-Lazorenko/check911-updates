@@ -45,6 +45,7 @@ import androidx.activity.viewModels
 import com.example.check_911.data.TestNotificationActivity
 import com.example.check_911.data.UpdateChecker
 import com.example.check_911.data.db.repository.SurveyRepository
+import com.example.check_911.data.db.repository.InstructionUploadRepository
 import com.example.check_911.data.utils.AppLogger
 import com.example.check_911.data.utils.NetworkUtils
 import com.example.check_911.data.utils.TelegramLogger
@@ -579,8 +580,18 @@ private fun addSurveyButtons(surveys: List<SurveyEntity>) {
 
         lifecycleScope.launch {
             val instructions = database.instructionDao().getAllInstructions()
+            val instructionResults = database.instructionResultDao().getAllResults()
+            val today = LocalDate.now().toString()
+
+            instructionResults
+                .filter { it.status == "sent" && !it.sentDate.isNullOrBlank() && it.sentDate < today }
+                .forEach { old ->
+                    database.instructionResultDao().clearInstructionResult(old.instructionId)
+                }
+
+            val freshResults = database.instructionResultDao().getAllResults().associateBy { it.instructionId }
             removeInstructionButtonsIfExists()
-            addInstructionButtons(instructions)
+            addInstructionButtons(instructions, freshResults)
             updateButtonNumbers()
         }
 
@@ -932,18 +943,26 @@ private fun addTasksButton(tasksCount: Int) {
     }
 }
 
-private fun addInstructionButtons(instructions: List<InstructionEntity>) {
+private fun addInstructionButtons(
+    instructions: List<InstructionEntity>,
+    resultsById: Map<String, com.example.check_911.data.db.entity.InstructionResultEntity>
+) {
     instructions.forEach { instruction ->
+        val status = resultsById[instruction.id]?.status ?: "draft"
+        val isSent = status == "sent"
+        val isReady = status == "ready"
+
         val circleNumber = createCircleNumberTextView(
             (buttonContainer.childCount + 1).toString(),
             true
         )
 
-        val button = createButton(
-            "Інструкція: ${instruction.title}",
-            R.drawable.ic_assignment,
-            true
-        )
+        val buttonText = when {
+            isSent -> "??????????: ${instruction.title}\n???????????"
+            isReady -> "??????????: ${instruction.title}\n?????? ?? ?????????"
+            else -> "??????????: ${instruction.title}\n? ??????? ???????????"
+        }
+        val button = createButton(buttonText, R.drawable.ic_assignment, true)
 
         val layout = createButtonLayout(circleNumber, button)
         layout.tag = "INSTRUCTION_BUTTON"
@@ -952,11 +971,35 @@ private fun addInstructionButtons(instructions: List<InstructionEntity>) {
         buttonContainer.addView(layout, insertIndex)
 
         button.setOnClickListener {
-            val intent = Intent(this, InstructionsActivity::class.java).apply {
-                putExtra(InstructionsActivity.EXTRA_INSTRUCTION_ID, instruction.id)
-                putExtra(InstructionsActivity.EXTRA_INSTRUCTION_TITLE, instruction.title)
+            if (isSent) {
+                AlertDialog.Builder(this@StoreActivity)
+                    .setTitle("?????????? ??? ???????????")
+                    .setMessage("?? ?????? ???????? ????????? ?? ?????????? ???????????")
+                    .setPositiveButton("???????? ?????????") { _, _ ->
+                        lifecycleScope.launch {
+                            database.instructionResultDao().updateResultStatus(instruction.id, "ready", null)
+                            uploadAllSurveyResults()
+                        }
+                    }
+                    .setNegativeButton("??????????") { _, _ ->
+                        lifecycleScope.launch {
+                            database.instructionResultDao().updateResultStatus(instruction.id, "draft", null)
+                            val intent = Intent(this@StoreActivity, InstructionsActivity::class.java).apply {
+                                putExtra(InstructionsActivity.EXTRA_INSTRUCTION_ID, instruction.id)
+                                putExtra(InstructionsActivity.EXTRA_INSTRUCTION_TITLE, instruction.title)
+                            }
+                            startActivity(intent)
+                        }
+                    }
+                    .setNeutralButton("?????????", null)
+                    .show()
+            } else {
+                val intent = Intent(this, InstructionsActivity::class.java).apply {
+                    putExtra(InstructionsActivity.EXTRA_INSTRUCTION_ID, instruction.id)
+                    putExtra(InstructionsActivity.EXTRA_INSTRUCTION_TITLE, instruction.title)
+                }
+                startActivity(intent)
             }
-            startActivity(intent)
         }
     }
 }
@@ -1322,8 +1365,9 @@ private fun uploadAllSurveyResults() {
 
             val surveys = database.resultsSurveyDao().getAllSurveyResults()
             val readySurveys = surveys.filter { it.status == "ready" }
+            val readyInstructions = database.instructionResultDao().getAllResults().filter { it.status == "ready" }
 
-            if (readySurveys.isEmpty()) {
+            if (readySurveys.isEmpty() && readyInstructions.isEmpty()) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@StoreActivity,
@@ -1369,6 +1413,18 @@ private fun uploadAllSurveyResults() {
 //                    }
 //                    }
                 }
+            }
+
+            if (readyInstructions.isNotEmpty()) {
+                val retrofit = NetWorkProvider.provideRetrofit(link = NetWorkProvider.BASE_URL)
+                val apiService = NetWorkProvider.provideApiService(retrofit, ApiServiceData::class.java)
+                val uploader = InstructionUploadRepository(apiService, database.instructionResultDao())
+                uploader.uploadReadyInstructions(
+                    token = token,
+                    pharmacyId = pharmacyId,
+                    gammaId = gammaId,
+                    dateVersion = BuildConfig.DATE_VERSION
+                )
             }
 
 //            02.09.25
@@ -2739,4 +2795,7 @@ private fun showLoadingDialog() {
         }
     }
 }
+
+
+
 

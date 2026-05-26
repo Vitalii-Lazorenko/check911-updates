@@ -6,6 +6,7 @@ import com.example.check_911.data.db.MainDb
 import com.example.check_911.data.db.repository.AppUrlRepository
 import com.example.check_911.data.db.repository.AuthorizationRepository
 import com.example.check_911.data.db.repository.InstructionRepository
+import com.example.check_911.data.db.repository.InstructionUploadRepository
 import com.example.check_911.data.db.repository.ResultsSurveyRepository
 import com.example.check_911.data.db.repository.SurveyRepository
 import com.example.check_911.data.db.repository.TaskRepository
@@ -42,6 +43,7 @@ val dbModule = module {
     single { get<MainDb>().taskDao() }
     single { get<MainDb>().taskResultDao() }
     single { get<MainDb>().instructionDao() }
+    single { get<MainDb>().instructionResultDao() }
 }
 
 val repositoryModule = module {
@@ -52,6 +54,7 @@ val repositoryModule = module {
     single { UsersRepository(get(), get()) }
     single { TaskRepository(get(), get(), get()) }
     single { InstructionRepository(get(), get()) }
+    single { InstructionUploadRepository(get(), get()) }
 }
 
 val viewModelModule = module {

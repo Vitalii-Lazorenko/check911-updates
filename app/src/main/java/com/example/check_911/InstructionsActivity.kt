@@ -1,6 +1,7 @@
 package com.example.check_911
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,6 +13,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -19,7 +21,10 @@ import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.check_911.data.db.entity.InstructionAnswerEntity
+import com.example.check_911.data.db.entity.InstructionResultEntity
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 private enum class InstructionFilterType {
     COMPLETED, INCOMPLETE, ALL
@@ -39,11 +44,34 @@ class InstructionsActivity : AppCompatActivity() {
     private lateinit var searchEditText: EditText
 
     private lateinit var adapter: InstructionAdapter
-    private val commentByDetail = mutableMapOf<String, String>()
-    private var currentDetailId: String? = null
     private var suppressCommentWatcher = false
     private var allItems: List<InstructionUiItem> = emptyList()
     private var currentFilter: InstructionFilterType = InstructionFilterType.ALL
+    private val commentByDetail = mutableMapOf<String, String>()
+    private val photoByDetail = mutableMapOf<String, String>()
+    private val groupByDetail = mutableMapOf<String, String>()
+    private var currentDetailId: String? = null
+
+    private lateinit var instructionId: String
+    private lateinit var instructionTitle: String
+
+    private val cameraLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val selected = adapter.getSelectedDetail() ?: return@registerForActivityResult
+            val path = result.data?.getStringExtra("photoPath") ?: return@registerForActivityResult
+            val groupKey = UUID.randomUUID().toString()
+
+            photoByDetail[selected.localId] = path
+            groupByDetail[selected.localId] = groupKey
+            val comment = commentByDetail[selected.localId].orEmpty()
+            applyGroupComment(groupKey, comment)
+
+            lifecycleScope.launch {
+                persistAllAnswers()
+            }
+            refreshCompleted()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +88,14 @@ class InstructionsActivity : AppCompatActivity() {
         searchBarContainer = findViewById(R.id.instructionSearchBarContainer)
         searchEditText = findViewById(R.id.instructionSearchEditText)
 
+        instructionId = intent.getStringExtra(EXTRA_INSTRUCTION_ID).orEmpty()
+        instructionTitle = intent.getStringExtra(EXTRA_INSTRUCTION_TITLE).orEmpty()
+        if (instructionId.isBlank()) {
+            Toast.makeText(this, "Інструкцію не знайдено", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         setupToolbar()
         setupList()
         setupBottomActions()
@@ -71,7 +107,7 @@ class InstructionsActivity : AppCompatActivity() {
     private fun setupToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(true)
-        toolbar.title = intent.getStringExtra(EXTRA_INSTRUCTION_TITLE).orEmpty().ifBlank { "Інструкція" }
+        toolbar.title = instructionTitle.ifBlank { "Інструкція" }
         toolbar.setNavigationOnClickListener { finish() }
     }
 
@@ -86,12 +122,42 @@ class InstructionsActivity : AppCompatActivity() {
                 finish()
                 true
             }
-            R.id.action_finish -> true
+            R.id.action_finish -> {
+                validateAndMarkInstructionReady()
+                true
+            }
             R.id.action_options -> {
                 showInstructionOptionsMenu(toolbar)
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun validateAndMarkInstructionReady() {
+        val allDetailIds = allItems.filterIsInstance<InstructionUiItem.DetailItem>().map { it.detail.localId }
+        val missing = allDetailIds.filter { photoByDetail[it].isNullOrBlank() }.toSet()
+        if (missing.isNotEmpty()) {
+            applyFilter(InstructionFilterType.ALL)
+            adapter.highlightIncomplete(missing)
+            adapter.selectNearestIncomplete()
+            scrollToSelected()
+            Toast.makeText(this, "Додайте фото для всіх пунктів інструкції", Toast.LENGTH_LONG).show()
+            lifecycleScope.launch { persistAllAnswers("draft") }
+            return
+        }
+
+        adapter.highlightIncomplete(emptySet())
+        lifecycleScope.launch {
+            persistAllAnswers("ready")
+            (application as App).database.instructionResultDao().upsertResult(
+                InstructionResultEntity(
+                    instructionId = instructionId,
+                    instructionTitle = instructionTitle,
+                    status = "ready"
+                )
+            )
+            Toast.makeText(this@InstructionsActivity, "Інструкцію позначено як готову до відправки", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -145,12 +211,11 @@ class InstructionsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Оберіть пункт інструкції", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            adapter.markSelectedDetailAsCompleted()
-            applyFilter(currentFilter)
+            cameraLauncher.launch(Intent(this, CameraActivity::class.java))
         }
 
         btnReuse.setOnClickListener {
-            Toast.makeText(this, "Масове застосування фото додамо наступним кроком", Toast.LENGTH_SHORT).show()
+            showReuseDialog()
         }
 
         btnClear.setOnClickListener {
@@ -159,34 +224,81 @@ class InstructionsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Оберіть пункт інструкції", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            adapter.clearSelectedDetailCompletion()
-            commentByDetail.remove(selected.localId)
+            val groupKey = groupByDetail[selected.localId]
+            if (!groupKey.isNullOrBlank()) {
+                val affected = groupByDetail.filterValues { it == groupKey }.keys.toList()
+                affected.forEach { localId ->
+                    groupByDetail.remove(localId)
+                    photoByDetail.remove(localId)
+                    commentByDetail.remove(localId)
+                }
+            } else {
+                groupByDetail.remove(selected.localId)
+                photoByDetail.remove(selected.localId)
+                commentByDetail.remove(selected.localId)
+            }
             suppressCommentWatcher = true
             commentEditText.setText("")
             suppressCommentWatcher = false
-            applyFilter(currentFilter)
+            lifecycleScope.launch { persistAllAnswers("draft") }
+            refreshCompleted()
         }
 
         btnArrowUp.setOnClickListener {
             val moved = adapter.moveSelection(-1)
-            if (moved != null) {
-                scrollToSelected()
-            }
+            if (moved != null) scrollToSelected()
         }
-
         btnArrowDown.setOnClickListener {
             val moved = adapter.moveSelection(1)
-            if (moved != null) {
-                scrollToSelected()
-            }
+            if (moved != null) scrollToSelected()
         }
+    }
+
+    private fun showReuseDialog() {
+        val source = adapter.getSelectedDetail()
+        if (source == null) {
+            Toast.makeText(this, "Оберіть пункт-джерело", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val photoPath = photoByDetail[source.localId]
+        if (photoPath.isNullOrBlank()) {
+            Toast.makeText(this, "Спочатку зробіть фото для цього пункту", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val sourceGroup = groupByDetail[source.localId] ?: UUID.randomUUID().toString().also {
+            groupByDetail[source.localId] = it
+        }
+        val sourceComment = commentByDetail[source.localId].orEmpty()
+
+        val details = allItems.filterIsInstance<InstructionUiItem.DetailItem>().map { it.detail }
+            .filter { it.localId != source.localId }
+        if (details.isEmpty()) return
+
+        val titles = details.map { it.title }.toTypedArray()
+        val checked = BooleanArray(details.size)
+
+        AlertDialog.Builder(this)
+            .setTitle("Застосувати фото до інших пунктів")
+            .setMultiChoiceItems(titles, checked) { _, which, isChecked -> checked[which] = isChecked }
+            .setPositiveButton("Застосувати") { _, _ ->
+                details.forEachIndexed { index, detail ->
+                    if (checked[index]) {
+                        photoByDetail[detail.localId] = photoPath
+                        groupByDetail[detail.localId] = sourceGroup
+                        commentByDetail[detail.localId] = sourceComment
+                    }
+                }
+                lifecycleScope.launch { persistAllAnswers("draft") }
+                refreshCompleted()
+            }
+            .setNegativeButton("Скасувати", null)
+            .show()
     }
 
     private fun scrollToSelected() {
         val pos = adapter.getSelectedAdapterPosition()
-        if (pos != RecyclerView.NO_POSITION) {
-            recyclerView.smoothScrollToPosition(pos)
-        }
+        if (pos != RecyclerView.NO_POSITION) recyclerView.smoothScrollToPosition(pos)
     }
 
     private fun setupSearch() {
@@ -225,9 +337,21 @@ class InstructionsActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
                 if (suppressCommentWatcher) return
                 val key = currentDetailId ?: return
-                commentByDetail[key] = s?.toString().orEmpty()
+                val text = s?.toString().orEmpty()
+                commentByDetail[key] = text
+                val groupKey = groupByDetail[key]
+                if (!groupKey.isNullOrBlank()) {
+                    applyGroupComment(groupKey, text)
+                }
+                lifecycleScope.launch { persistAllAnswers("draft") }
             }
         })
+    }
+
+    private fun applyGroupComment(groupKey: String, comment: String) {
+        groupByDetail.filterValues { it == groupKey }.keys.forEach { localId ->
+            commentByDetail[localId] = comment
+        }
     }
 
     private fun confirmClearAnswers() {
@@ -236,29 +360,41 @@ class InstructionsActivity : AppCompatActivity() {
             .setMessage("Коментарі та фото-мітки будуть скинуті.")
             .setPositiveButton("Так") { _, _ ->
                 commentByDetail.clear()
+                photoByDetail.clear()
+                groupByDetail.clear()
                 suppressCommentWatcher = true
                 commentEditText.setText("")
                 suppressCommentWatcher = false
-                adapter.setCompletedDetails(emptySet())
-                applyFilter(currentFilter)
+                lifecycleScope.launch {
+                    (application as App).database.instructionResultDao().clearAnswersForInstruction(instructionId)
+                    (application as App).database.instructionResultDao().upsertResult(
+                        InstructionResultEntity(instructionId, instructionTitle, "draft")
+                    )
+                }
+                refreshCompleted()
             }
             .setNegativeButton("Скасувати", null)
             .show()
     }
 
+    private fun refreshCompleted() {
+        val completed = photoByDetail.filterValues { !it.isNullOrBlank() }.keys.toSet()
+        adapter.setCompletedDetails(completed)
+        applyFilter(currentFilter)
+    }
+
     private fun applyFilter(type: InstructionFilterType) {
         currentFilter = type
         val query = searchEditText.text?.toString()?.trim().orEmpty().lowercase()
-        val completed = adapter.getCompletedDetailIds()
+        val completed = photoByDetail.filterValues { !it.isNullOrBlank() }.keys.toSet()
 
         val detailByCategory = allItems
             .filterIsInstance<InstructionUiItem.DetailItem>()
             .groupBy { it.detail.categoryId }
 
         val filteredDetailsByCategory = mutableMapOf<String, List<InstructionUiItem.DetailItem>>()
-
         detailByCategory.forEach { (categoryId, details) ->
-            val afterFilter = details.filter { detailItem ->
+            val filtered = details.filter { detailItem ->
                 val isCompleted = completed.contains(detailItem.detail.localId)
                 val passFilter = when (type) {
                     InstructionFilterType.ALL -> true
@@ -268,9 +404,7 @@ class InstructionsActivity : AppCompatActivity() {
                 val passSearch = query.isBlank() || detailItem.detail.title.lowercase().contains(query)
                 passFilter && passSearch
             }
-            if (afterFilter.isNotEmpty()) {
-                filteredDetailsByCategory[categoryId] = afterFilter
-            }
+            if (filtered.isNotEmpty()) filteredDetailsByCategory[categoryId] = filtered
         }
 
         val rebuilt = mutableListOf<InstructionUiItem>()
@@ -281,7 +415,6 @@ class InstructionsActivity : AppCompatActivity() {
                 rebuilt.addAll(details.sortedBy { it.detail.orderNumber })
             }
         }
-
         adapter.setItems(rebuilt)
         adapter.setCompletedDetails(completed)
 
@@ -292,15 +425,9 @@ class InstructionsActivity : AppCompatActivity() {
     }
 
     private fun loadInstruction() {
-        val instructionId = intent.getStringExtra(EXTRA_INSTRUCTION_ID)
-        if (instructionId.isNullOrBlank()) {
-            Toast.makeText(this, "Інструкцію не знайдено", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
         lifecycleScope.launch {
-            val all = (application as App).database.instructionDao().getInstructionsWithCategories()
+            val db = (application as App).database
+            val all = db.instructionDao().getInstructionsWithCategories()
             val instruction = all.firstOrNull { it.instruction.id == instructionId }
             if (instruction == null) {
                 Toast.makeText(this@InstructionsActivity, "Інструкцію не знайдено в локальній БД", Toast.LENGTH_SHORT).show()
@@ -308,31 +435,73 @@ class InstructionsActivity : AppCompatActivity() {
                 return@launch
             }
 
+            db.instructionResultDao().upsertResult(
+                InstructionResultEntity(instructionId, instructionTitle, "draft")
+            )
+
+            val savedAnswers = db.instructionResultDao().getAnswersByInstruction(instructionId)
+            savedAnswers.forEach {
+                if (!it.photoPath.isNullOrBlank()) photoByDetail[it.detailLocalId] = it.photoPath
+                if (!it.comment.isNullOrBlank()) commentByDetail[it.detailLocalId] = it.comment
+                if (!it.groupKey.isNullOrBlank()) groupByDetail[it.detailLocalId] = it.groupKey
+            }
+
             allItems = buildList {
                 instruction.categories.forEach { cat ->
                     add(InstructionUiItem.CategoryItem(cat.category.id, cat.category.title))
-                    cat.details
-                        .sortedBy { it.orderNumber }
-                        .forEach { detail ->
-                            add(
-                                InstructionUiItem.DetailItem(
-                                    InstructionDetailUi(
-                                        localId = detail.localId,
-                                        id = detail.id,
-                                        categoryId = detail.categoryId,
-                                        title = detail.title,
-                                        templateId = detail.templateId,
-                                        orderNumber = detail.orderNumber
-                                    )
+                    cat.details.sortedBy { it.orderNumber }.forEach { detail ->
+                        add(
+                            InstructionUiItem.DetailItem(
+                                InstructionDetailUi(
+                                    localId = detail.localId,
+                                    id = detail.id,
+                                    categoryId = detail.categoryId,
+                                    title = detail.title,
+                                    templateId = detail.templateId,
+                                    orderNumber = detail.orderNumber
                                 )
                             )
-                        }
+                        )
+                    }
                 }
             }
+
             applyFilter(InstructionFilterType.ALL)
             adapter.selectFirstDetail()
             scrollToSelected()
         }
+    }
+
+    private suspend fun persistAllAnswers(statusOverride: String = "draft") {
+        val db = (application as App).database
+        val detailItems = allItems.filterIsInstance<InstructionUiItem.DetailItem>().map { it.detail }
+        val answers = detailItems.mapNotNull { detail ->
+            val photo = photoByDetail[detail.localId]
+            val comment = commentByDetail[detail.localId]
+            val group = groupByDetail[detail.localId]
+            if (photo.isNullOrBlank() && comment.isNullOrBlank()) return@mapNotNull null
+
+            InstructionAnswerEntity(
+                detailLocalId = detail.localId,
+                instructionId = instructionId,
+                detailId = detail.id,
+                detailTitle = detail.title,
+                groupKey = group,
+                comment = comment,
+                photoPath = photo
+            )
+        }
+
+        db.instructionResultDao().replaceInstructionAnswers(instructionId, answers)
+        val current = db.instructionResultDao().getResult(instructionId)
+        db.instructionResultDao().upsertResult(
+            InstructionResultEntity(
+                instructionId = instructionId,
+                instructionTitle = instructionTitle,
+                status = statusOverride,
+                sentDate = if (statusOverride == "sent") current?.sentDate else null
+            )
+        )
     }
 
     companion object {

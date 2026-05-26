@@ -6,6 +6,8 @@ import com.example.check_911.data.networking.networking.models.SurveyUploadReque
 import com.example.check_911.data.networking.networking.models.TaskAnswerRequest
 import com.example.check_911.data.networking.networking.models.TaskDto
 import com.example.check_911.data.networking.networking.models.InstructionDto
+import com.example.check_911.data.networking.networking.models.InstructionLogPostRequest
+import com.example.check_911.data.networking.networking.models.InstructionLogPostResponse
 import com.example.check_911.data.networking.networking.models.reserve.AuthorizationResponse
 import com.example.check_911.data.networking.networking.models.reserve.LoginRequest
 import com.example.check_911.data.networking.networking.models.reserve.SurveyUploadResponse
@@ -93,6 +95,23 @@ interface ApiServiceData {
     suspend fun getInstructions(
         @Header("Authorization") token: String
     ): Response<List<InstructionDto>>
+
+    @POST("/instruction_log/post")
+    suspend fun postInstructionLog(
+        @Header("Authorization") token: String,
+        @Body body: InstructionLogPostRequest
+    ): Response<InstructionLogPostResponse>
+
+    @Multipart
+    @PUT("/instruction_log/accept/file")
+    suspend fun uploadInstructionPhoto(
+        @Header("Authorization") token: String,
+        @Query("pharmacyId") pharmacyId: Long,
+        @Part file: MultipartBody.Part,
+        @Part("logHeaderId") logHeaderId: RequestBody,
+        @Part("comment") comment: RequestBody,
+        @Part("details[]") details: List<RequestBody>
+    ): Response<Unit>
 
 //    метод для отправки выполнения задачи
     @PATCH("/survey_pharmacy_task/id/{id}/set/answer")
