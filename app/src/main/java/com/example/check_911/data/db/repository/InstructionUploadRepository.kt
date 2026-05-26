@@ -42,6 +42,7 @@ class InstructionUploadRepository(
         val logResponse = api.postInstructionLog(
             token = token,
             body = InstructionLogPostRequest(
+                pharmacyId = pharmacyId,
                 gammaId = gammaId,
                 dateVersion = dateVersion,
                 instructionHeaderId = instructionId
