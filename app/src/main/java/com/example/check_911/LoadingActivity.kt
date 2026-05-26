@@ -24,6 +24,7 @@ class LoadingActivity : AppCompatActivity() {
     private val surveyViewModel: SurveyViewModel by viewModel()
     private val usersViewModel: UsersViewModel by viewModel()
     private val taskViewModel: TaskViewModel by viewModel()
+    private val instructionTaskViewModel: InstructionTaskViewModel by viewModel()
     private val instructionViewModel: InstructionViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,9 +53,7 @@ class LoadingActivity : AppCompatActivity() {
         retryButton.visibility = View.GONE
         continueButton.visibility = View.GONE
 
-        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
-        val token = sharedPreferences.getString("auth_token", null)
-
+        val token = getSharedPreferences("user_prefs", MODE_PRIVATE).getString("auth_token", null)
         if (token == null) {
             showError("Токен не знайдено. Виконайте вхід знову.")
             AppLogger.log("LoadingActivity", "Токена не знайдено.", this@LoadingActivity)
@@ -64,36 +63,33 @@ class LoadingActivity : AppCompatActivity() {
         val surveyResult = MutableLiveData<Result<Unit>>()
         val usersResult = MutableLiveData<Result<Unit>>()
         val tasksResult = MutableLiveData<Result<Unit>>()
+        val instructionTasksResult = MutableLiveData<Result<Unit>>()
         val instructionsResult = MutableLiveData<Result<Unit>>()
 
         surveyViewModel.surveyState.removeObservers(this)
         usersViewModel.usersState.removeObservers(this)
         taskViewModel.taskState.removeObservers(this)
+        instructionTaskViewModel.taskState.removeObservers(this)
         instructionViewModel.instructionState.removeObservers(this)
 
-        surveyViewModel.surveyState.observe(this) { result ->
-            surveyResult.value = result
-            checkCompletion(surveyResult.value, usersResult.value, tasksResult.value, instructionsResult.value)
-        }
+        fun checkNow() = checkCompletion(
+            surveyResult.value,
+            usersResult.value,
+            tasksResult.value,
+            instructionTasksResult.value,
+            instructionsResult.value
+        )
 
-        usersViewModel.usersState.observe(this) { result ->
-            usersResult.value = result
-            checkCompletion(surveyResult.value, usersResult.value, tasksResult.value, instructionsResult.value)
-        }
-
-        taskViewModel.taskState.observe(this) { result ->
-            tasksResult.value = result
-            checkCompletion(surveyResult.value, usersResult.value, tasksResult.value, instructionsResult.value)
-        }
-
-        instructionViewModel.instructionState.observe(this) { result ->
-            instructionsResult.value = result
-            checkCompletion(surveyResult.value, usersResult.value, tasksResult.value, instructionsResult.value)
-        }
+        surveyViewModel.surveyState.observe(this) { surveyResult.value = it; checkNow() }
+        usersViewModel.usersState.observe(this) { usersResult.value = it; checkNow() }
+        taskViewModel.taskState.observe(this) { tasksResult.value = it; checkNow() }
+        instructionTaskViewModel.taskState.observe(this) { instructionTasksResult.value = it; checkNow() }
+        instructionViewModel.instructionState.observe(this) { instructionsResult.value = it; checkNow() }
 
         surveyViewModel.loadSurveys(token)
         usersViewModel.loadUsers(token)
         taskViewModel.loadTasks(token)
+        instructionTaskViewModel.loadTasks(token)
         instructionViewModel.loadInstructions(token)
     }
 
@@ -101,11 +97,12 @@ class LoadingActivity : AppCompatActivity() {
         surveyResult: Result<Unit>?,
         usersResult: Result<Unit>?,
         tasksResult: Result<Unit>?,
+        instructionTasksResult: Result<Unit>?,
         instructionsResult: Result<Unit>?
     ) {
-        if (surveyResult == null || usersResult == null || tasksResult == null || instructionsResult == null) return
+        if (surveyResult == null || usersResult == null || tasksResult == null || instructionTasksResult == null || instructionsResult == null) return
 
-        if (surveyResult.isSuccess && usersResult.isSuccess && tasksResult.isSuccess && instructionsResult.isSuccess) {
+        if (surveyResult.isSuccess && usersResult.isSuccess && tasksResult.isSuccess && instructionTasksResult.isSuccess && instructionsResult.isSuccess) {
             showSuccess()
             AppLogger.log("LoadingActivity", "Отримання даних пройшло успішно", this@LoadingActivity)
             return
@@ -115,10 +112,11 @@ class LoadingActivity : AppCompatActivity() {
             surveyResult.exceptionOrNull()?.let { "Помилка завантаження опитувань: ${it.message}" },
             usersResult.exceptionOrNull()?.let { "Помилка завантаження користувачів: ${it.message}" },
             tasksResult.exceptionOrNull()?.let { "Помилка завантаження задач: ${it.message}" },
+            instructionTasksResult.exceptionOrNull()?.let { "Помилка завантаження задач по інструкціях: ${it.message}" },
             instructionsResult.exceptionOrNull()?.let { "Помилка завантаження інструкцій: ${it.message}" }
         ).joinToString("\n")
 
-        val allowContinue = surveyResult.isFailure || tasksResult.isFailure || instructionsResult.isFailure
+        val allowContinue = surveyResult.isFailure || tasksResult.isFailure || instructionTasksResult.isFailure || instructionsResult.isFailure
         showError(errors, allowContinue)
     }
 
@@ -126,7 +124,6 @@ class LoadingActivity : AppCompatActivity() {
         progressBar.visibility = View.GONE
         successMessageTextView.visibility = View.VISIBLE
         successImageView.visibility = View.VISIBLE
-
         Handler(Looper.getMainLooper()).postDelayed({
             startActivity(Intent(this, PromoActivity::class.java))
             finish()

@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.example.check_911.ApiServiceData
 import com.example.check_911.App
 import com.example.check_911.NetWorkProvider
+import com.example.check_911.data.db.repository.InstructionTaskRepository
 import com.example.check_911.data.db.repository.TaskRepository
 
 class TasksSyncWorker(
@@ -21,6 +22,7 @@ class TasksSyncWorker(
     )
 
     private val repository = TaskRepository(api, database.taskDao(), applicationContext)
+    private val instructionTaskRepository = InstructionTaskRepository(api, database.instructionTaskDao(), applicationContext)
 
     override suspend fun doWork(): Result {
         return try {
@@ -32,6 +34,7 @@ class TasksSyncWorker(
             }
 
             repository.getAndSaveTasks(token)
+            instructionTaskRepository.getAndSaveTasks(token)
 
             Result.success()
 

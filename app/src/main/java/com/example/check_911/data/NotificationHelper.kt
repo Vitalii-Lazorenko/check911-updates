@@ -20,6 +20,7 @@ class NotificationHelper(private val ctx: Context) {
         const val ID_MONTHLY = 1003
         const val ID_INCOMPLETE = 2001
         const val ID_READY_TO_SEND = 2002
+        const val ID_NEW_INSTRUCTION_TASKS = 2003
     }
 
     fun ensureChannels() {

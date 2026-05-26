@@ -5,6 +5,7 @@ import com.example.check_911.data.networking.networking.models.UsersDto
 import com.example.check_911.data.networking.networking.models.SurveyUploadRequest
 import com.example.check_911.data.networking.networking.models.TaskAnswerRequest
 import com.example.check_911.data.networking.networking.models.TaskDto
+import com.example.check_911.data.networking.networking.models.InstructionTaskDto
 import com.example.check_911.data.networking.networking.models.InstructionDto
 import com.example.check_911.data.networking.networking.models.InstructionLogPostRequest
 import com.example.check_911.data.networking.networking.models.InstructionLogPostResponse
@@ -91,6 +92,11 @@ interface ApiServiceData {
         @Header("Authorization") token: String
     ): Response<List<TaskDto>>
 
+    @GET("/instruction_pharmacy_task/get")
+    suspend fun getInstructionTasks(
+        @Header("Authorization") token: String
+    ): Response<List<InstructionTaskDto>>
+
     @GET("/instruction/get/all")
     suspend fun getInstructions(
         @Header("Authorization") token: String
@@ -116,6 +122,13 @@ interface ApiServiceData {
 //    метод для отправки выполнения задачи
     @PATCH("/survey_pharmacy_task/id/{id}/set/answer")
     suspend fun sendTaskAnswer(
+        @Header("Authorization") token: String,
+        @Path("id") taskId: String,
+        @Body body: TaskAnswerRequest
+    ): Response<Unit>
+
+    @PATCH("/instruction_pharmacy_task/id/{id}/set/answer")
+    suspend fun sendInstructionTaskAnswer(
         @Header("Authorization") token: String,
         @Path("id") taskId: String,
         @Body body: TaskAnswerRequest

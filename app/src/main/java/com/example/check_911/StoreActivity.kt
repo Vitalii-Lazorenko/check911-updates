@@ -629,6 +629,14 @@ private fun addSurveyButtons(surveys: List<SurveyEntity>) {
             }
         }
 
+        lifecycleScope.launch {
+            database.instructionTaskDao().getTasksCountFlow().collect { count ->
+                removeInstructionTasksButtonIfExists()
+                addInstructionTasksButton(count)
+                updateButtonNumbers()
+            }
+        }
+
         // Добавим кнопку "Надіслати"
         addSendButton(hasReadySurvey)
     }
@@ -969,6 +977,43 @@ private fun addTasksButton(tasksCount: Int) {
     }
 }
 
+private fun addInstructionTasksButton(tasksCount: Int) {
+
+    val isActive = tasksCount > 0
+
+    val circleNumber = createCircleNumberTextView(
+        (buttonContainer.childCount + 1).toString(),
+        isActive
+    )
+
+    val button = createButton(
+        "ЗАДАЧІ ПО ІНСТРУКЦІЯХ",
+        R.drawable.ic_tasks,
+        isActive
+    )
+
+    addBadgeToButton(button, tasksCount, isActive)
+
+    val layout = createButtonLayout(circleNumber, button)
+    layout.tag = "INSTRUCTION_TASKS_BUTTON"
+
+    val insertIndex = if (buttonContainer.childCount > 0)
+        buttonContainer.childCount - 1
+    else
+        0
+
+    buttonContainer.addView(layout, insertIndex)
+
+    if (isActive) {
+        button.setOnClickListener {
+            startActivity(Intent(this, InstructionTasksActivity::class.java))
+        }
+    } else {
+        button.isEnabled = false
+        circleNumber.isActivated = false
+    }
+}
+
 private fun addInstructionButtons(
     instructions: List<InstructionEntity>,
     resultsById: Map<String, com.example.check_911.data.db.entity.InstructionResultEntity>
@@ -1138,6 +1183,15 @@ private fun removeTasksButtonIfExists() {
                 buttonContainer.removeView(view)
                 return
             }
+    }
+}
+
+private fun removeInstructionTasksButtonIfExists() {
+    for (i in buttonContainer.childCount - 1 downTo 0) {
+        val view = buttonContainer.getChildAt(i)
+        if (view.tag == "INSTRUCTION_TASKS_BUTTON") {
+            buttonContainer.removeViewAt(i)
+        }
     }
 }
 

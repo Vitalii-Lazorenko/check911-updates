@@ -61,7 +61,13 @@
             android:name=".TasksActivity"
             android:exported="false" />
         <activity
+            android:name=".InstructionTasksActivity"
+            android:exported="false" />
+        <activity
             android:name=".TaskDetailsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".InstructionTaskDetailsActivity"
             android:exported="false" />
         <activity
             android:name=".InstructionsActivity"
