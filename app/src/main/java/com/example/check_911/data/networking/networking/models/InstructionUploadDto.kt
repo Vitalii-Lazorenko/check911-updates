@@ -1,6 +1,7 @@
 package com.example.check_911.data.networking.networking.models
 
 import java.util.Date
+import com.google.gson.annotations.SerializedName
 
 data class InstructionLogPostRequest(
     val pharmacyId: Long,
@@ -10,5 +11,6 @@ data class InstructionLogPostRequest(
 )
 
 data class InstructionLogPostResponse(
-    val logHeaderId: String?
+    @SerializedName("logHeaderId") val logHeaderId: String? = null,
+    @SerializedName("id") val id: String? = null
 )

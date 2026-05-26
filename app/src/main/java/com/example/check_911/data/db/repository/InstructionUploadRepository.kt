@@ -52,7 +52,7 @@ class InstructionUploadRepository(
         if (!logResponse.isSuccessful) {
             throw Exception("instruction_log/post error ${logResponse.code()}: ${logResponse.errorBody()?.string()}")
         }
-        val logHeaderId = logResponse.body()?.logHeaderId
+        val logHeaderId = logResponse.body()?.logHeaderId ?: logResponse.body()?.id
             ?: throw Exception("instruction_log/post missing logHeaderId")
 
         val grouped = answers.groupBy { it.groupKey ?: it.detailLocalId }
