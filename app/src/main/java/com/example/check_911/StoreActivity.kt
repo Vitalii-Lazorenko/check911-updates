@@ -586,6 +586,13 @@ private fun addSurveyButtons(surveys: List<SurveyEntity>) {
             instructionResults
                 .filter { it.status == "sent" && !it.sentDate.isNullOrBlank() && it.sentDate < today }
                 .forEach { old ->
+                    val oldAnswers = database.instructionResultDao().getAnswersByInstruction(old.instructionId)
+                    oldAnswers.mapNotNull { it.photoPath }.distinct().forEach { path ->
+                        runCatching {
+                            val f = File(path)
+                            if (f.exists()) f.delete()
+                        }
+                    }
                     database.instructionResultDao().clearInstructionResult(old.instructionId)
                 }
 

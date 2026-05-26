@@ -1,7 +1,11 @@
 package com.example.check_911
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -18,12 +22,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.check_911.data.db.entity.InstructionAnswerEntity
 import com.example.check_911.data.db.entity.InstructionResultEntity
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.UUID
 
 private enum class InstructionFilterType {
@@ -51,6 +58,7 @@ class InstructionsActivity : AppCompatActivity() {
     private val photoByDetail = mutableMapOf<String, String>()
     private val groupByDetail = mutableMapOf<String, String>()
     private var currentDetailId: String? = null
+    private var currentPhotoPath: String? = null
 
     private lateinit var instructionId: String
     private lateinit var instructionTitle: String
@@ -69,6 +77,24 @@ class InstructionsActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 persistAllAnswers()
+            }
+            refreshCompleted()
+        }
+
+    private val takePictureLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val selected = adapter.getSelectedDetail() ?: return@registerForActivityResult
+            val path = currentPhotoPath ?: return@registerForActivityResult
+            val file = File(path)
+            if (!file.exists() || file.length() <= 0L) return@registerForActivityResult
+            val groupKey = UUID.randomUUID().toString()
+            photoByDetail[selected.localId] = path
+            groupByDetail[selected.localId] = groupKey
+            val comment = commentByDetail[selected.localId].orEmpty()
+            applyGroupComment(groupKey, comment)
+            lifecycleScope.launch {
+                persistAllAnswers("draft")
             }
             refreshCompleted()
         }
@@ -211,7 +237,7 @@ class InstructionsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Оберіть пункт інструкції", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            cameraLauncher.launch(Intent(this, CameraActivity::class.java))
+            checkPermissionsAndOpenCamera()
         }
 
         btnReuse.setOnClickListener {
@@ -276,7 +302,11 @@ class InstructionsActivity : AppCompatActivity() {
         if (details.isEmpty()) return
 
         val titles = details.map { it.title }.toTypedArray()
-        val checked = BooleanArray(details.size)
+        val sourceGroupExisting = groupByDetail[source.localId]
+        val checked = BooleanArray(details.size) { idx ->
+            val d = details[idx]
+            !sourceGroupExisting.isNullOrBlank() && groupByDetail[d.localId] == sourceGroupExisting
+        }
 
         AlertDialog.Builder(this)
             .setTitle("Застосувати фото до інших пунктів")
@@ -328,6 +358,59 @@ class InstructionsActivity : AppCompatActivity() {
     private fun hideKeyboard() {
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(searchEditText.windowToken, 0)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 101 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openCamera()
+        }
+    }
+
+    private fun checkPermissionsAndOpenCamera() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            openCamera()
+        } else {
+            requestPermissions(arrayOf(Manifest.permission.CAMERA), 101)
+        }
+    }
+
+    private fun openCamera() {
+        if (shouldUseCustomCamera()) {
+            cameraLauncher.launch(Intent(this, CameraActivity::class.java))
+            return
+        }
+
+        val file = createImageFile() ?: return
+        currentPhotoPath = file.absolutePath
+        val uri: Uri = FileProvider.getUriForFile(this, "$packageName.provider", file)
+        val intent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+            putExtra(android.provider.MediaStore.EXTRA_OUTPUT, uri)
+            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        }
+        takePictureLauncher.launch(intent)
+    }
+
+    private fun shouldUseCustomCamera(): Boolean {
+        val m = Build.MANUFACTURER.lowercase()
+        val model = Build.MODEL.lowercase()
+        return m.contains("xiaomi") || model.contains("redmi")
+    }
+
+    private fun createImageFile(): File? {
+        return try {
+            File.createTempFile(
+                "instruction_${System.currentTimeMillis()}",
+                ".jpg",
+                getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun setupCommentWatcher() {
@@ -474,6 +557,8 @@ class InstructionsActivity : AppCompatActivity() {
 
     private suspend fun persistAllAnswers(statusOverride: String = "draft") {
         val db = (application as App).database
+        val previousAnswers = db.instructionResultDao().getAnswersByInstruction(instructionId)
+        val previousPaths = previousAnswers.mapNotNull { it.photoPath }.toSet()
         val detailItems = allItems.filterIsInstance<InstructionUiItem.DetailItem>().map { it.detail }
         val answers = detailItems.mapNotNull { detail ->
             val photo = photoByDetail[detail.localId]
@@ -493,6 +578,14 @@ class InstructionsActivity : AppCompatActivity() {
         }
 
         db.instructionResultDao().replaceInstructionAnswers(instructionId, answers)
+        val currentPaths = answers.mapNotNull { it.photoPath }.toSet()
+        (previousPaths - currentPaths).forEach { path ->
+            runCatching {
+                val f = File(path)
+                if (f.exists()) f.delete()
+            }
+        }
+
         val current = db.instructionResultDao().getResult(instructionId)
         db.instructionResultDao().upsertResult(
             InstructionResultEntity(
