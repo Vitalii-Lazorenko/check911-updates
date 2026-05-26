@@ -250,19 +250,9 @@ class InstructionsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Оберіть пункт інструкції", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val groupKey = groupByDetail[selected.localId]
-            if (!groupKey.isNullOrBlank()) {
-                val affected = groupByDetail.filterValues { it == groupKey }.keys.toList()
-                affected.forEach { localId ->
-                    groupByDetail.remove(localId)
-                    photoByDetail.remove(localId)
-                    commentByDetail.remove(localId)
-                }
-            } else {
-                groupByDetail.remove(selected.localId)
-                photoByDetail.remove(selected.localId)
-                commentByDetail.remove(selected.localId)
-            }
+            groupByDetail.remove(selected.localId)
+            photoByDetail.remove(selected.localId)
+            commentByDetail.remove(selected.localId)
             suppressCommentWatcher = true
             commentEditText.setText("")
             suppressCommentWatcher = false
@@ -317,6 +307,12 @@ class InstructionsActivity : AppCompatActivity() {
                         photoByDetail[detail.localId] = photoPath
                         groupByDetail[detail.localId] = sourceGroup
                         commentByDetail[detail.localId] = sourceComment
+                    } else {
+                        if (groupByDetail[detail.localId] == sourceGroup) {
+                            groupByDetail.remove(detail.localId)
+                            photoByDetail.remove(detail.localId)
+                            commentByDetail.remove(detail.localId)
+                        }
                     }
                 }
                 lifecycleScope.launch { persistAllAnswers("draft") }
