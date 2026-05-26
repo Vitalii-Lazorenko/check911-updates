@@ -599,6 +599,11 @@ private fun addSurveyButtons(surveys: List<SurveyEntity>) {
             val freshResults = database.instructionResultDao().getAllResults().associateBy { it.instructionId }
             removeInstructionButtonsIfExists()
             addInstructionButtons(instructions, freshResults)
+            val hasReadyInstruction = freshResults.values.any { it.status == "ready" }
+            if (hasReadyInstruction && !hasReadySurvey) {
+                removeSendButtonIfExists()
+                addSendButton(true)
+            }
             updateButtonNumbers()
         }
 
@@ -642,6 +647,7 @@ private fun addSendButton(isEnabled: Boolean) {
     val buttonSend = createButton("Надіслати дані", R.drawable.ic_send, isEnabled)
 
     val sendLayout = createButtonLayout(sendCircleNumber, buttonSend)
+    sendLayout.tag = "SEND_BUTTON"
     buttonContainer.addView(sendLayout)
 
     if (isEnabled) {
@@ -650,6 +656,14 @@ private fun addSendButton(isEnabled: Boolean) {
         }
     }
 }
+
+private fun removeSendButtonIfExists() {
+    val existing = buttonContainer.findViewWithTag<View>("SEND_BUTTON")
+    if (existing != null) {
+        buttonContainer.removeView(existing)
+    }
+}
+
 
     private fun addScunButton() {
         val sendCircleNumber = createCircleNumberTextView((buttonContainer.childCount + 1).toString(), true)

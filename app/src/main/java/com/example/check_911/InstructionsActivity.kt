@@ -188,6 +188,8 @@ class InstructionsActivity : AppCompatActivity() {
                 )
             )
             Toast.makeText(this@InstructionsActivity, "Інструкцію позначено як готову до відправки", Toast.LENGTH_SHORT).show()
+            setResult(RESULT_OK)
+            finish()
         }
     }
 
@@ -539,9 +541,12 @@ class InstructionsActivity : AppCompatActivity() {
                 return@launch
             }
 
-            db.instructionResultDao().upsertResult(
-                InstructionResultEntity(instructionId, instructionTitle, "draft")
-            )
+            val existingResult = db.instructionResultDao().getResult(instructionId)
+            if (existingResult == null) {
+                db.instructionResultDao().upsertResult(
+                    InstructionResultEntity(instructionId, instructionTitle, "draft")
+                )
+            }
 
             val savedAnswers = db.instructionResultDao().getAnswersByInstruction(instructionId)
             val detailsById = instruction.categories
