@@ -80,6 +80,7 @@ class InstructionsActivity : AppCompatActivity() {
             applyGroupComment(groupKey, comment)
 
             lifecycleScope.launch {
+                persistSelectedAnswer(selected)
                 persistAllAnswers()
             }
             refreshCompleted()
@@ -99,6 +100,7 @@ class InstructionsActivity : AppCompatActivity() {
             val comment = commentByDetail[selected.localId].orEmpty()
             applyGroupComment(groupKey, comment)
             lifecycleScope.launch {
+                persistSelectedAnswer(selected)
                 persistAllAnswers("draft")
             }
             refreshCompleted()
@@ -649,6 +651,39 @@ class InstructionsActivity : AppCompatActivity() {
                 status = statusOverride,
                 sentDate = if (statusOverride == "sent") current?.sentDate else null
             )
+        )
+    }
+
+    private suspend fun persistSelectedAnswer(detail: InstructionDetailUi) {
+        val db = (application as App).database
+        val photo = photoByDetail[detail.localId]
+        val comment = commentByDetail[detail.localId]
+        val group = groupByDetail[detail.localId]
+        val existingResult = db.instructionResultDao().getResult(instructionId)
+        if (existingResult == null) {
+            db.instructionResultDao().upsertResult(
+                InstructionResultEntity(instructionId, instructionTitle, "draft")
+            )
+        }
+        if (photo.isNullOrBlank() && comment.isNullOrBlank()) {
+            db.instructionResultDao().deleteAnswer(instructionId, detail.localId)
+            return
+        }
+        db.instructionResultDao().upsertAnswer(
+            InstructionAnswerEntity(
+                detailLocalId = detail.localId,
+                instructionId = instructionId,
+                detailId = detail.id,
+                detailTitle = detail.title,
+                groupKey = group,
+                comment = comment,
+                photoPath = photo
+            )
+        )
+        AppLogger.log(
+            "InstructionsActivity",
+            "persistSelectedAnswer: instructionId=$instructionId, detailLocalId=${detail.localId}, hasPhoto=${!photo.isNullOrBlank()}",
+            this@InstructionsActivity
         )
     }
 
